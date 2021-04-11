@@ -131,7 +131,7 @@ func nodeDeposit(c *cli.Context) error {
     if !(c.Bool("yes") || cliutils.Confirm(fmt.Sprintf(
         "Are you sure you want to deposit %.6f ETH to create a minipool with a minimum possible commission rate of %f%%? Please note that:\n" + 
         "  * Running a minipool is a long-term commitment.\n" + 
-        "  * With the current gas price set to %f gwei, this transaction will cost up to %f ETH.",
+        "  * With the current gas price set to %f gwei, this transaction will cost up to %f ETH.\n",
         math.RoundDown(eth.WeiToEth(amountWei), 6),
         minNodeFee * 100,
         costResponse.GasPrice,

@@ -8,6 +8,7 @@ type APIResponse struct {
 
 
 type CostEstimateResponse struct {
+    Status string       `json:"status"`
     GasPrice float64    `json:"gasPrice"`
     EthCost float64     `json:"ethCost"`
     Error string        `json:"error"`
