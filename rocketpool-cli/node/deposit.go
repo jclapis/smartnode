@@ -1,17 +1,16 @@
 package node
 
 import (
-    "fmt"
-    "strconv"
+	"fmt"
+	"strconv"
 
-    "github.com/rocket-pool/rocketpool-go/utils/eth"
-    "github.com/urfave/cli"
+	"github.com/rocket-pool/rocketpool-go/utils/eth"
+	"github.com/urfave/cli"
 
-    "github.com/rocket-pool/smartnode/shared/services/rocketpool"
-    cliutils "github.com/rocket-pool/smartnode/shared/utils/cli"
-    "github.com/rocket-pool/smartnode/shared/utils/math"
+	"github.com/rocket-pool/smartnode/shared/services/rocketpool"
+	cliutils "github.com/rocket-pool/smartnode/shared/utils/cli"
+	"github.com/rocket-pool/smartnode/shared/utils/math"
 )
-
 
 // Config
 const DefaultMaxNodeFeeSlippage = 0.01 // 1% below current network fee
@@ -122,11 +121,21 @@ func nodeDeposit(c *cli.Context) error {
 
     }
 
+    // Get the cost estimate for the transaction
+    costResponse, err := rp.NodeDepositEstimate(amountWei, minNodeFee)
+    if err != nil {
+        return err
+    }
+
     // Prompt for confirmation
     if !(c.Bool("yes") || cliutils.Confirm(fmt.Sprintf(
-        "Are you sure you want to deposit %.6f ETH to create a minipool with a minimum possible commission rate of %f%%? Running a minipool is a long-term commitment.",
+        "Are you sure you want to deposit %.6f ETH to create a minipool with a minimum possible commission rate of %f%%? Please note that:\n" + 
+        "  * Running a minipool is a long-term commitment.\n" + 
+        "  * With the current gas price set to %f gwei, this transaction will cost up to %f ETH.",
         math.RoundDown(eth.WeiToEth(amountWei), 6),
-        minNodeFee * 100))) {
+        minNodeFee * 100,
+        costResponse.GasPrice,
+        costResponse.EthCost))) {
             fmt.Println("Cancelled.")
             return nil
     }

@@ -250,6 +250,26 @@ func RegisterSubcommands(command *cli.Command, name string, aliases []string) {
 
                 },
             },
+            cli.Command{
+                Name:      "deposit-estimate",
+                Aliases:   []string{"de"},
+                Usage:     "Estimate the gas cost and fee to make a deposit and create a minipool",
+                UsageText: "rocketpool api node deposit-estimate amount min-fee",
+                Action: func(c *cli.Context) error {
+
+                    // Validate args
+                    if err := cliutils.ValidateArgCount(c, 2); err != nil { return err }
+                    amountWei, err := cliutils.ValidateDepositWeiAmount("deposit amount", c.Args().Get(0))
+                    if err != nil { return err }
+                    minNodeFee, err := cliutils.ValidateFraction("minimum node fee", c.Args().Get(1))
+                    if err != nil { return err }
+
+                    // Run
+                    api.PrintResponse(getNodeDepositCost(c, amountWei, minNodeFee))
+                    return nil
+
+                },
+            },
 
             cli.Command{
                 Name:      "can-send",

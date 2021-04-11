@@ -1,15 +1,14 @@
 package rocketpool
 
 import (
-    "encoding/json"
-    "fmt"
-    "math/big"
+	"encoding/json"
+	"fmt"
+	"math/big"
 
-    "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common"
 
-    "github.com/rocket-pool/smartnode/shared/types/api"
+	"github.com/rocket-pool/smartnode/shared/types/api"
 )
-
 
 // Get node status
 func (c *Client) NodeStatus() (api.NodeStatusResponse, error) {
@@ -227,6 +226,23 @@ func (c *Client) NodeDeposit(amountWei *big.Int, minFee float64) (api.NodeDeposi
     }
     if response.Error != "" {
         return api.NodeDepositResponse{}, fmt.Errorf("Could not make node deposit: %s", response.Error)
+    }
+    return response, nil
+}
+
+
+// Estimate a node deposit cost
+func (c *Client) NodeDepositEstimate(amountWei *big.Int, minFee float64) (api.CostEstimateResponse, error) {
+    responseBytes, err := c.callAPI(fmt.Sprintf("node deposit-estimate %s %f", amountWei.String(), minFee))
+    if err != nil {
+        return api.CostEstimateResponse{}, fmt.Errorf("Could not get node deposit estimate: %w", err)
+    }
+    var response api.CostEstimateResponse
+    if err := json.Unmarshal(responseBytes, &response); err != nil {
+        return api.CostEstimateResponse{}, fmt.Errorf("Could not decode node deposit estimate response: %w", err)
+    }
+    if response.Error != "" {
+        return api.CostEstimateResponse{}, fmt.Errorf("Could not get node deposit estimate: %s", response.Error)
     }
     return response, nil
 }

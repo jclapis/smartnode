@@ -1,21 +1,21 @@
 package node
 
 import (
-    "context"
-    "errors"
-    "math/big"
+	"context"
+	"errors"
+	"math/big"
 
-    "github.com/ethereum/go-ethereum/common"
-    tndao "github.com/rocket-pool/rocketpool-go/dao/trustednode"
-    "github.com/rocket-pool/rocketpool-go/minipool"
-    "github.com/rocket-pool/rocketpool-go/node"
-    "github.com/rocket-pool/rocketpool-go/settings/protocol"
-    tnsettings "github.com/rocket-pool/rocketpool-go/settings/trustednode"
-    "github.com/urfave/cli"
-    "golang.org/x/sync/errgroup"
+	"github.com/ethereum/go-ethereum/common"
+	tndao "github.com/rocket-pool/rocketpool-go/dao/trustednode"
+	"github.com/rocket-pool/rocketpool-go/minipool"
+	"github.com/rocket-pool/rocketpool-go/node"
+	"github.com/rocket-pool/rocketpool-go/settings/protocol"
+	tnsettings "github.com/rocket-pool/rocketpool-go/settings/trustednode"
+	"github.com/urfave/cli"
+	"golang.org/x/sync/errgroup"
 
-    "github.com/rocket-pool/smartnode/shared/services"
-    "github.com/rocket-pool/smartnode/shared/types/api"
+	"github.com/rocket-pool/smartnode/shared/services"
+	"github.com/rocket-pool/smartnode/shared/types/api"
 )
 
 
@@ -176,6 +176,39 @@ func nodeDeposit(c *cli.Context, amountWei *big.Int, minNodeFee float64) (*api.N
         return nil, errors.New("Could not get minipool created event")
     }
     response.MinipoolAddress = minipoolCreatedEvents[0].(minipoolCreated).Minipool
+
+    // Return response
+    return &response, nil
+
+}
+
+
+func getNodeDepositCost(c *cli.Context, amountWei *big.Int, minNodeFee float64) (*api.CostEstimateResponse, error) {
+
+    // Get services
+    if err := services.RequireNodeRegistered(c); err != nil { return nil, err }
+    w, err := services.GetWallet(c)
+    if err != nil { return nil, err }
+    rp, err := services.GetRocketPool(c)
+    if err != nil { return nil, err }
+
+    // Response
+    response := api.CostEstimateResponse{}
+
+    // Get transactor
+    opts, err := w.GetNodeAccountTransactor()
+    if err != nil {
+        return nil, err
+    }
+    opts.Value = amountWei
+
+    // Get the estimate
+    gasPrice, ethCost, err := node.EstimateDepositCosts(rp, minNodeFee, opts)
+    if err != nil {
+        return nil, err
+    }
+    response.GasPrice = gasPrice
+    response.EthCost = ethCost
 
     // Return response
     return &response, nil
